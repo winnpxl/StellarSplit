@@ -53,6 +53,7 @@ impl SplitEscrowContract {
             total_amount,
             deposited_amount: 0,
             status: SplitStatus::Pending,
+            note: String::from_str(&env, ""),
         };
         storage::set_split(&env, &split);
         events::emit_split_created(&env, &split);
@@ -125,5 +126,32 @@ impl SplitEscrowContract {
 
     pub fn get_split(env: Env, split_id: u64) -> Result<Split, Error> {
         storage::get_split(&env, split_id).ok_or(Error::SplitNotFound)
+    }
+
+    pub fn set_note(env: Env, split_id: u64, caller: Address, note: String) -> Result<(), Error> {
+        caller.require_auth();
+
+        let mut split = storage::get_split(&env, split_id).ok_or(Error::SplitNotFound)?;
+
+        if split.creator != caller {
+            return Err(Error::Unauthorized);
+        }
+
+        if split.status == SplitStatus::Released {
+            return Err(Error::SplitReleased);
+        }
+
+        if note.len() > 128 {
+            return Err(Error::InvalidAmount);
+        }
+
+        split.note = note;
+        storage::set_split(&env, &split);
+        Ok(())
+    }
+
+    pub fn get_note(env: Env, split_id: u64) -> Result<String, Error> {
+        let split = storage::get_split(&env, split_id).ok_or(Error::SplitNotFound)?;
+        Ok(split.note)
     }
 }

@@ -17,4 +17,5 @@ pub struct Split {
     pub total_amount: i128,
     pub deposited_amount: i128,
     pub status: SplitStatus,
+    pub note: String,
 }
